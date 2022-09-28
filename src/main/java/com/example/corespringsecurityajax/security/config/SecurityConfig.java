@@ -1,7 +1,9 @@
 package com.example.corespringsecurityajax.security.config;
 
+import com.example.corespringsecurityajax.security.filter.AjaxLoginProcessingFilter;
 import com.example.corespringsecurityajax.security.handler.CustomAccessDeniedHandler;
 import com.example.corespringsecurityajax.security.provider.CustomAuthenticationProvider;
+import com.example.corespringsecurityajax.security.token.AjaxAuthenticationToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
@@ -18,6 +20,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -87,7 +90,25 @@ public class SecurityConfig {
     }
 
     @Bean
+    public AccessDeniedHandler accessDeniedHandler() {
+        CustomAccessDeniedHandler accessDeniedHandler = new CustomAccessDeniedHandler();
+        accessDeniedHandler.setErrorPage("/denied");
+        return accessDeniedHandler;
+    }
+
+
+
+    @Bean
+    AuthenticationManager authenticationManager1 (HttpSecurity http) throws Exception {
+        return http.getSharedObject(AuthenticationManager.class);
+    }
+
+
+    @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+
+        http
+                .csrf().disable();
 
         http
                 .authorizeRequests()
@@ -108,17 +129,15 @@ public class SecurityConfig {
                 .permitAll();
 
         http
+                .addFilterBefore(new AjaxLoginProcessingFilter() , UsernamePasswordAuthenticationFilter.class );
+
+        http
                 .exceptionHandling()
                 .accessDeniedHandler(accessDeniedHandler());
 
         return http.build();
     }
 
-    @Bean
-    public AccessDeniedHandler accessDeniedHandler() {
-        CustomAccessDeniedHandler accessDeniedHandler = new CustomAccessDeniedHandler();
-        accessDeniedHandler.setErrorPage("/denied");
-        return accessDeniedHandler;
-    }
+
 
 }
